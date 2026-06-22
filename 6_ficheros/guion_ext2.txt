@@ -1,0 +1,97 @@
+#-----------------Experimentos con ext2 ------------------------------
+
+# Para facilitar la introducción de los distintos mandatos especificados en
+# el enunciado del ejercicio, este fichero, que no es un script, contiene
+# dichos mandatos para permitir el "copia y pega" correspondiente.
+
+# borra los ficheros usados en experimentos previos
+rm -f miDisco2 copia? dump? 
+
+# creación del "disco"
+truncate -s 512M miDisco2  # creo un fichero de 512MiB que no ocupa espacio
+
+
+#-------------------------------------------------------------------------
+# Paso 0 (ya resuelto): creación y montaje del sistema de ficheros
+
+# copia del estado inicial del disco (vacío)
+./cphuecos miDisco2 copia0 4096
+
+# primera fase: creación del sistema de ficheros
+mkfs.ext2 -b 4096 -i 8192 -I 256 -O "^sparse_super,^resize_inode" miDisco2
+
+# guarda copia del estado posterior
+./cphuecos miDisco2 copia1 4096
+dumpe2fs miDisco2 > dump1
+
+# segunda fase: montaje del sistema de ficheros
+sudo mount miDisco2 /mnt
+
+# guarda copia del estado posterior
+./cphuecos miDisco2 copia2 4096
+dumpe2fs miDisco2 > dump2
+
+# cambios en la primera fase
+./cmpdisp 1 4096 copia0 copia1 # muestra qué bloques del disco se han modificado
+
+# cambios en la segunda fase
+./cmpdisp 1 4096 copia1 copia2 
+diff dump1 dump2
+
+# Use también debugfs para obtener información adicional de esos bloques
+# debugfs miDisco2
+# puede usar mandatos de debugfs como stat, bd, testb, testi, icheck o ncheck
+
+#-------------------------------------------------------------------------
+#Paso 1: creación de un directorio
+
+sudo mkdir /mnt/DIRECTORIO # el experimento
+
+sleep 30 # recuerde que hay que esperar un poco
+
+# guarda copia del estado posterior
+./cphuecos miDisco2 copia3 4096
+dumpe2fs miDisco2 > dump3
+
+# cambios
+./cmpdisp 1 4096 copia2 copia3
+diff dump2 dump3
+
+
+#-------------------------------------------------------------------------
+#Paso 2: creación de un fichero
+
+sudo touch /mnt/DIRECTORIO/FICHERO
+
+sleep 30 # recuerde que hay que esperar un poco
+
+# guarda copia del estado posterior
+./cphuecos miDisco2 copia4 4096
+dumpe2fs miDisco2 > dump4
+
+# cambios
+./cmpdisp 1 4096 copia3 copia4
+diff dump3 dump4
+
+#-------------------------------------------------------------------------
+#Paso 3: escritura en un fichero
+
+sudo dd if=/dev/random of=/mnt/DIRECTORIO/FICHERO bs=4K count=1040 # el experimento
+
+sleep 30 # recuerde que hay que esperar un poco
+
+# guarda copia del estado posterior
+./cphuecos miDisco2 copia5 4096
+dumpe2fs miDisco2 > dump5
+
+# cambios
+./cmpdisp 1 4096 copia4 copia5
+diff dump4 dump5
+
+
+#-------------------------------------------------------------------------
+#Final de los ejercicios con ext2: eliminamos todos los recursos
+
+sudo umount /mnt
+
+rm -f miDisco2 dump? copia?
