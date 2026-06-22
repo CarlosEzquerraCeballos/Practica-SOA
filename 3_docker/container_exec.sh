@@ -8,7 +8,9 @@ shift 1
 PID=$(./get_container_pid.sh $CID)
 CGROUP=$(cat /proc/$PID/cgroup | sed 's/^..*:://')
 
-# TODO: incluir el propio script ($$) en el cgroup del contenedor
+# incluir el propio script ($$) en el cgroup del contenedor
+echo $$ | sudo tee /sys/fs/cgroup$CGROUP/cgroup.procs > /dev/null
 
-# TODO: usar nsenter para ejecutar el mandato asociándolo con todos los espacios
+# usar nsenter para ejecutar el mandato asociándolo con todos los espacios
 # de nombres del contenedor
+sudo nsenter -t $PID -a "$@"
