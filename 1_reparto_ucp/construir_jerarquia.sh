@@ -36,8 +36,28 @@ test $cpus && echo "se ha especificado un valor de 'cpus': $cpus" || echo "no se
 test $maxpids && echo "se ha especificado un valor de 'maxpids': $maxpids" || echo "no se ha especificado 'maxpids': no habrá límite en el número de procesos en el grupo"
 
 # Planificación de la empresa
+mkdir /sys/fs/cgroup/empresa
+test $weight && echo $weight > /sys/fs/cgroup/empresa/cpu.weight
+test $maxload && echo $(( maxload * 1000 * $(nproc) )) 100000 > /sys/fs/cgroup/empresa/cpu.max
+test $cpus && echo $cpus > /sys/fs/cgroup/empresa/cpuset.cpus
+test $maxpids && echo $maxpids > /sys/fs/cgroup/empresa/pids.max
 
 # Planificación de las sucursales
+echo "+cpu" > /sys/fs/cgroup/empresa/cgroup.subtree_control
+mkdir /sys/fs/cgroup/empresa/suc1
+mkdir /sys/fs/cgroup/empresa/suc2
+echo 50  > /sys/fs/cgroup/empresa/suc1/cpu.weight
+echo 100 > /sys/fs/cgroup/empresa/suc2/cpu.weight
 
 # Planificación de los departamentos
+echo "+cpu" > /sys/fs/cgroup/empresa/suc1/cgroup.subtree_control
+echo "+cpu" > /sys/fs/cgroup/empresa/suc2/cgroup.subtree_control
+mkdir /sys/fs/cgroup/empresa/suc1/depA
+mkdir /sys/fs/cgroup/empresa/suc1/depB
+mkdir /sys/fs/cgroup/empresa/suc2/depA
+mkdir /sys/fs/cgroup/empresa/suc2/depB
+echo 25  > /sys/fs/cgroup/empresa/suc1/depA/cpu.weight
+echo 100 > /sys/fs/cgroup/empresa/suc1/depB/cpu.weight
+echo 20  > /sys/fs/cgroup/empresa/suc2/depA/cpu.weight
+echo 100 > /sys/fs/cgroup/empresa/suc2/depB/cpu.weight
 
